@@ -6,7 +6,7 @@ interface IDecision {
   title: string;
   description: string;
   owner?: Types.ObjectId;
-  dueDate: Date;
+  dueDate?: Date;
   confidence: number;
   status: "open" | "closed";
 }
@@ -54,6 +54,9 @@ const decisionSchema = new mongoose.Schema<IDecision>(
     timestamps: true,
   },
 );
+
+decisionSchema.index({ teamId: 1 });
+decisionSchema.index({ transcriptId: 1 });
 
 const Decision = mongoose.model<IDecision>("Decision", decisionSchema);
 

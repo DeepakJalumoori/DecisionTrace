@@ -37,6 +37,8 @@ const decisionAuditSchema = new mongoose.Schema<IDecisionAudit>(
   },
 );
 
+decisionAuditSchema.index({ decisionId: 1 });
+
 const DecisionAudit = mongoose.model<IDecisionAudit>(
   "DecisionAudit",
   decisionAuditSchema,

@@ -27,6 +27,9 @@ const transcriptSchema = new mongoose.Schema<ITranscript>(
   },
 );
 
+transcriptSchema.index({ teamId: 1 });
+transcriptSchema.index({ teamId: 1, sourceHash: 1 }, { unique: true });
+
 const Transcript = mongoose.model<ITranscript>("Transcript", transcriptSchema);
 
 export default Transcript;
