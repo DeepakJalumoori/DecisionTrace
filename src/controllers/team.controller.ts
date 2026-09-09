@@ -55,24 +55,10 @@ export const addTeamMember = async (
   req: Request<{ teamId: string }>,
   res: Response,
 ) => {
-  const requestingUserId = req.user.userId;
   const teamId = req.params.teamId;
   const memberEmail = req.body.email;
 
   try {
-    const requestingUserMembership = await TeamMember.findOne({
-      userId: requestingUserId,
-      teamId,
-    });
-
-    if (
-      requestingUserMembership === null ||
-      requestingUserMembership.role !== "owner"
-    ) {
-      return res.status(403).json({
-        message: "you are not allowed to add any team member.",
-      });
-    }
     const targetUser = await User.findOne({ email: memberEmail });
 
     if (!targetUser) {
