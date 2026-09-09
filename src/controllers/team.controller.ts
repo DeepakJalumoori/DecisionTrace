@@ -1,5 +1,6 @@
 import Team from "../models/Team";
 import TeamMember from "../models/TeamMember";
+import mongoose from "mongoose";
 
 import { Request, Response } from "express";
 import User from "../models/User";
@@ -9,7 +10,7 @@ export const createTeam = async (req: Request, res: Response) => {
   const userId = req.user.userId;
 
   try {
-    const team = await Team.create({ name });
+    const team = await Team.create({ name, ownerId: userId });
 
     await TeamMember.create({
       userId,
@@ -24,6 +25,17 @@ export const createTeam = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === 11000
+    ) {
+      return res.status(409).json({
+        message: "You already have a team with this name.",
+      });
+    }
+
     return res.status(500).json({
       message: "Unexpected Error!",
     });
