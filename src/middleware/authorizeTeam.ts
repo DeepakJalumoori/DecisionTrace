@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import TeamMember from "../models/TeamMember";
+import mongoose from "mongoose";
 
 const authorizeTeam = (requiredRole: "owner" | "member") => {
   return async (
@@ -9,6 +10,12 @@ const authorizeTeam = (requiredRole: "owner" | "member") => {
   ) => {
     const userId = req.user.userId;
     const teamId = req.params.teamId;
+
+    if (!mongoose.Types.ObjectId.isValid(teamId)) {
+      return res.status(400).json({
+        message: "Invalid team ID",
+      });
+    }
 
     try {
       const membership = await TeamMember.findOne({

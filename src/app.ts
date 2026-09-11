@@ -3,6 +3,7 @@ import authRoutes from "./routes/auth.routes";
 import teamRoutes from "./routes/team.routes";
 import errorMiddleware from "./middleware/error.middleware";
 import logger from "./middleware/logger.middleware";
+import transcriptRoutes from "./routes/transcript.routes";
 
 const app = express();
 
@@ -16,5 +17,6 @@ app.get("/health", (req, res) => {
 
 app.use("/api/auth", logger, authRoutes);
 app.use("/api/teams", logger, teamRoutes);
+app.use("/api/teams/:teamId/transcripts", logger, transcriptRoutes);
 app.use(errorMiddleware);
 export default app;
