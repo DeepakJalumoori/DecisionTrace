@@ -3,8 +3,7 @@ import { transcriptSchema } from "../validators/transcript.validator";
 import crypto from "crypto";
 import Transcript from "../models/Transcript";
 import mongoose from "mongoose";
-import { extractionSchema } from "../validators/extraction.validator";
-import { extractDecisions } from "../services/llm/groq";
+import { extractDecisions } from "../services/extraction.service";
 import Decision from "../models/Decision";
 import User from "../models/User";
 
@@ -36,17 +35,10 @@ export const createTranscript = async (
       sourceHash,
     });
 
-    const extracted = await extractDecisions(content);
-    const validation = extractionSchema.safeParse(extracted);
-
-    if (!validation.success) {
-      return res.status(500).json({
-        message: "Invalid extraction result",
-      });
-    }
+    const decisions = await extractDecisions(content);
 
     const createdDecisions = [];
-    for (const decision of validation.data.decisions) {
+    for (const decision of decisions) {
       const owner = decision.owner
         ? await User.findOne({
             name: { $regex: `^${decision.owner}$`, $options: "i" },
