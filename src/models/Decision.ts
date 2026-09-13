@@ -48,6 +48,7 @@ const decisionSchema = new mongoose.Schema<IDecision>(
       type: String,
       enum: ["open", "closed"],
       required: true,
+      default: "open",
     },
   },
   {

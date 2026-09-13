@@ -65,7 +65,6 @@ export const createTranscript = async (
         owner: owner?._id,
         dueDate: decision.dueDate ? new Date(decision.dueDate) : undefined,
         confidence: decision.confidence,
-        status: "open",
       });
 
       createdDecisions.push(createdDecision);
@@ -77,6 +76,16 @@ export const createTranscript = async (
       decisions: createdDecisions,
     });
   } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === 11000
+    ) {
+      return res.status(409).json({
+        message: "Transcript already exists for this team.",
+      });
+    }
     return res.status(500).json({
       message: "unexpected error..",
     });

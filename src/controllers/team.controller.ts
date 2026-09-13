@@ -1,6 +1,7 @@
 import Team from "../models/Team";
 import TeamMember from "../models/TeamMember";
 import mongoose from "mongoose";
+import Decision from "../models/Decision";
 
 import { Request, Response } from "express";
 import User from "../models/User";
@@ -98,6 +99,25 @@ export const addTeamMember = async (
 
     return res.status(201).json({
       message: "Member added successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "unexpected error..",
+    });
+  }
+};
+
+export const getTeamDecisions = async (
+  req: Request<{ teamId: string }>,
+  res: Response,
+) => {
+  const teamId = req.params.teamId;
+
+  try {
+    const decisions = await Decision.find({ teamId });
+
+    return res.status(200).json({
+      decisions,
     });
   } catch (error) {
     return res.status(500).json({
