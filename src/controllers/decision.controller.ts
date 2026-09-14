@@ -16,7 +16,6 @@ const resolveDecision = async (
     });
   }
   const session = await mongoose.startSession();
-  let transactionStarted = false;
 
   try {
     const decision = await Decision.findById(decisionId);
@@ -46,7 +45,6 @@ const resolveDecision = async (
       });
     }
     session.startTransaction();
-    transactionStarted = true;
     decision.status = "closed";
 
     await decision.save({ session });
@@ -79,6 +77,52 @@ const resolveDecision = async (
     });
   } finally {
     await session.endSession();
+  }
+};
+
+export const getDecisionHistory = async (
+  req: Request<{ decisionId: string }>,
+  res: Response,
+) => {
+  const { decisionId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(decisionId)) {
+    return res.status(400).json({
+      message: "Invalid Decision ID! ",
+    });
+  }
+
+  try {
+    const decision = await Decision.findById(decisionId);
+    if (!decision) {
+      return res.status(404).json({
+        message: "Decision not found!",
+      });
+    }
+
+    const membership = await TeamMember.findOne({
+      userId: req.user.userId,
+      teamId: decision.teamId,
+    });
+
+    if (!membership) {
+      return res.status(403).json({
+        message: "You are not a member of this team.",
+      });
+    }
+
+    const records = await DecisionAudit.find({ decisionId }).sort({
+      createdAt: 1,
+    });
+
+    return res.status(200).json({
+      decisionId,
+      history: records,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to fetch decision history",
+    });
   }
 };
 

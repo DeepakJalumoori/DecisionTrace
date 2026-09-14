@@ -3,8 +3,8 @@ import mongoose, { Types } from "mongoose";
 interface IDecisionAudit {
   decisionId: Types.ObjectId;
   action: "created" | "updated" | "status_changed" | "owner_changed";
-  oldValue: string;
-  newValue: string;
+  oldValue?: string;
+  newValue?: string;
   changedBy: Types.ObjectId;
 }
 

@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import { extractDecisions } from "../services/extraction.service";
 import Decision from "../models/Decision";
 import User from "../models/User";
+import DecisionAudit from "../models/DecisionAudit";
 
 export const createTranscript = async (
   req: Request<{ teamId: string }>,
@@ -28,6 +29,8 @@ export const createTranscript = async (
   const content = result.data.content;
   const sourceHash = crypto.createHash("sha256").update(content).digest("hex");
 
+  const session = await mongoose.startSession();
+
   try {
     const transcript = await Transcript.create({
       teamId,
@@ -37,7 +40,8 @@ export const createTranscript = async (
 
     const decisions = await extractDecisions(content);
 
-    const createdDecisions = [];
+    const preparedDecisions = [];
+
     for (const decision of decisions) {
       const owner = decision.owner
         ? await User.findOne({
@@ -57,18 +61,40 @@ export const createTranscript = async (
           message: "Invalid due date in extraction result",
         });
       }
-      const createdDecision = await Decision.create({
+
+      preparedDecisions.push({
         teamId,
         transcriptId: transcript._id,
         title: decision.title,
         description: decision.description,
         owner: owner?._id,
-        dueDate: decision.dueDate ? new Date(decision.dueDate) : undefined,
+        dueDate,
         confidence: decision.confidence,
       });
+    }
+
+    session.startTransaction();
+
+    const createdDecisions = [];
+    for (const decision of preparedDecisions) {
+      const [createdDecision] = await Decision.create([decision], { session });
+
+      await DecisionAudit.create(
+        [
+          {
+            decisionId: createdDecision._id,
+            action: "created",
+            newValue: createdDecision.status,
+            changedBy: req.user.userId,
+          },
+        ],
+        { session },
+      );
 
       createdDecisions.push(createdDecision);
     }
+
+    await session.commitTransaction();
 
     return res.status(201).json({
       message: "Transcript processed successfully!",
@@ -76,6 +102,9 @@ export const createTranscript = async (
       decisions: createdDecisions,
     });
   } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     if (
       typeof error === "object" &&
       error !== null &&
@@ -89,5 +118,7 @@ export const createTranscript = async (
     return res.status(500).json({
       message: "unexpected error..",
     });
+  } finally {
+    await session.endSession();
   }
 };
